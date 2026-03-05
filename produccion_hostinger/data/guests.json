@@ -1,0 +1,4 @@
+[
+  {"id":"guest_1","name":"María Ruiz","email":"maria@correo.com","phone":"5550101","vip":"VIP"},
+  {"id":"guest_2","name":"Carlos León","email":"carlos@correo.com","phone":"5552288","vip":"Normal"}
+]
