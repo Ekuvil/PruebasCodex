@@ -42,3 +42,27 @@ php -S 0.0.0.0:8000
 Luego abre:
 - `http://localhost:8000/demo.html` (preview visual moderno)
 - `http://localhost:8000/api.php?module=rooms` (API activa)
+
+## Carpeta de producción para Hostinger
+Se añadió la carpeta `produccion_hostinger` lista para subir a hosting compartido PHP:
+
+```text
+produccion_hostinger/
+├── data/
+│   ├── guests.json
+│   ├── inventory.json
+│   ├── messages.json
+│   ├── reservations.json
+│   ├── rooms.json
+│   └── tasks.json
+└── public_html/
+    ├── api.php
+    └── index.html
+```
+
+### Cómo subir a Hostinger
+1. Sube el contenido de `produccion_hostinger/public_html` dentro de `public_html/` de tu cuenta.
+2. Sube la carpeta `produccion_hostinger/data` al mismo nivel que `public_html`.
+3. Asegúrate de que `data/` tenga permisos de escritura para PHP.
+
+> Nota: `index.html` usa el preview visual (`demo.html`). Si deseas desplegar la app React completa, primero ejecuta el build en `frontend` y reemplaza `public_html/index.html` + assets por el contenido de `frontend/dist`.

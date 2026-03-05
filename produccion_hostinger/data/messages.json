@@ -1,0 +1,4 @@
+[
+  {"id":"msg_1","sender":"Recepción","recipient":"Housekeeping","subject":"Preparar suite 101","priority":"Alta"},
+  {"id":"msg_2","sender":"Gerencia","recipient":"Todos","subject":"Reunión de resultados semanal","priority":"Media"}
+]
