@@ -1,0 +1,11 @@
+[
+  {
+    "id": "hotel_1",
+    "name": "El Hotel Rogger",
+    "city": "Ciudad de México",
+    "address": "Av. Central 180, Col. Centro",
+    "phone": "+52 55 1100 2200",
+    "email": "contacto@hotelrogger.com",
+    "floors": "6"
+  }
+]
