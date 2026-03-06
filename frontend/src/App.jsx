@@ -10,7 +10,14 @@ const modules = [
   { key: 'inventory', label: 'Inventario' }
 ];
 
-const endpoint = 'http://localhost:8000/api.php';
+const endpoint = import.meta.env.VITE_API_URL || '/api.php';
+const receptionPhone = import.meta.env.VITE_RECEPTION_PHONE || '5215550000000';
+const receptionEmail = import.meta.env.VITE_RECEPTION_EMAIL || 'recepcion@hotel.com';
+
+function buildWhatsAppLink(phone, text) {
+  const cleaned = String(phone || '').replace(/\D/g, '') || receptionPhone;
+  return `https://wa.me/${cleaned}?text=${encodeURIComponent(text)}`;
+}
 
 async function api(module, method = 'GET', payload) {
   const res = await fetch(`${endpoint}?module=${module}`, {
@@ -27,7 +34,7 @@ async function api(module, method = 'GET', payload) {
   return res.json();
 }
 
-function CrudSection({ title, module, fields, records, onRefresh }) {
+function CrudSection({ title, module, fields, records, onRefresh, whatsappTemplate }) {
   const initial = useMemo(
     () => fields.reduce((acc, field) => ({ ...acc, [field.name]: '' }), {}),
     [fields]
@@ -59,6 +66,12 @@ function CrudSection({ title, module, fields, records, onRefresh }) {
       next[field.name] = item[field.name] ?? '';
     });
     setForm(next);
+  };
+
+  const openWhatsApp = (item) => {
+    const message = whatsappTemplate(item);
+    const phone = item.phone || item.contactPhone || receptionPhone;
+    window.open(buildWhatsAppLink(phone, message), '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -99,9 +112,12 @@ function CrudSection({ title, module, fields, records, onRefresh }) {
                 {fields.map((f) => (
                   <td key={f.name}>{item[f.name]}</td>
                 ))}
-                <td>
-                  <button className="btn-ghost" onClick={() => startEdit(item)}>
+                <td className="actions-cell">
+                  <button className="btn-ghost" type="button" onClick={() => startEdit(item)}>
                     Editar
+                  </button>
+                  <button className="btn-whatsapp" type="button" onClick={() => openWhatsApp(item)}>
+                    WhatsApp
                   </button>
                 </td>
               </tr>
@@ -201,6 +217,7 @@ export default function App() {
               key={item.key}
               className={item.key === active ? 'active' : ''}
               onClick={() => setActive(item.key)}
+              type="button"
             >
               {item.label}
             </button>
@@ -210,7 +227,16 @@ export default function App() {
       <main>
         <header className="topbar">
           <input placeholder="Buscar por habitación, huésped o tarea..." />
-          <div className="user">Administrador · Vista general</div>
+          <div className="contact-actions">
+            <button
+              type="button"
+              className="btn-whatsapp"
+              onClick={() => window.open(buildWhatsAppLink(receptionPhone, 'Hola recepción, necesito apoyo.'), '_blank')}
+            >
+              WhatsApp Recepción
+            </button>
+            <a className="btn-ghost" href={`mailto:${receptionEmail}`}>Correo recepción</a>
+          </div>
         </header>
         {active === 'dashboard' && <Dashboard data={data} />}
         {active === 'rooms' && (
@@ -225,6 +251,7 @@ export default function App() {
             ]}
             records={data.rooms}
             onRefresh={loadAll}
+            whatsappTemplate={(item) => `Habitación ${item.number} (${item.type}) en estado ${item.status}.`}
           />
         )}
         {active === 'reservations' && (
@@ -240,6 +267,7 @@ export default function App() {
             ]}
             records={data.reservations}
             onRefresh={loadAll}
+            whatsappTemplate={(item) => `Reserva de ${item.guest} para habitación ${item.room}. Check-in: ${item.checkIn}, Check-out: ${item.checkOut}.`}
           />
         )}
         {active === 'guests' && (
@@ -254,6 +282,7 @@ export default function App() {
             ]}
             records={data.guests}
             onRefresh={loadAll}
+            whatsappTemplate={(item) => `Hola ${item.name}, te contacta recepción del hotel.`}
           />
         )}
         {active === 'tasks' && (
@@ -268,6 +297,7 @@ export default function App() {
             ]}
             records={data.tasks}
             onRefresh={loadAll}
+            whatsappTemplate={(item) => `Tarea: ${item.title} | Área: ${item.area} | Estado: ${item.status} | Límite: ${item.dueDate}.`}
           />
         )}
         {active === 'messages' && (
@@ -282,6 +312,7 @@ export default function App() {
             ]}
             records={data.messages}
             onRefresh={loadAll}
+            whatsappTemplate={(item) => `Mensaje interno de ${item.sender} para ${item.recipient}: ${item.subject} (Prioridad: ${item.priority}).`}
           />
         )}
         {active === 'inventory' && (
@@ -296,6 +327,7 @@ export default function App() {
             ]}
             records={data.inventory}
             onRefresh={loadAll}
+            whatsappTemplate={(item) => `Inventario ${item.item} (${item.category}): stock actual ${item.stock}, mínimo ${item.minStock}.`}
           />
         )}
       </main>
