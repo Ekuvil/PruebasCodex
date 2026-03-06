@@ -1,0 +1,23 @@
+[
+  {
+    "id": "floor_1",
+    "level": "1",
+    "name": "Lobby y recepción",
+    "zone": "Operación general",
+    "status": "Activo"
+  },
+  {
+    "id": "floor_2",
+    "level": "2",
+    "name": "Habitaciones ejecutivas",
+    "zone": "Hospedaje",
+    "status": "Activo"
+  },
+  {
+    "id": "floor_3",
+    "level": "3",
+    "name": "Suites",
+    "zone": "Hospedaje premium",
+    "status": "Activo"
+  }
+]

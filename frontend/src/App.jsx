@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 
 const modules = [
-  { key: 'dashboard', label: 'Dashboard' },
-  { key: 'reservations', label: 'Reservas' },
+  { key: 'dashboard', label: 'Panel General' },
+  { key: 'hotel', label: 'Hotel' },
+  { key: 'floors', label: 'Pisos' },
   { key: 'rooms', label: 'Habitaciones' },
+  { key: 'reservations', label: 'Reservas' },
   { key: 'guests', label: 'Huéspedes' },
   { key: 'tasks', label: 'Tareas' },
   { key: 'messages', label: 'Mensajes' },
@@ -27,7 +29,7 @@ async function api(module, method = 'GET', payload) {
   return res.json();
 }
 
-function CrudSection({ title, module, fields, records, onRefresh }) {
+function CrudSection({ title, helper, module, fields, records, onRefresh }) {
   const initial = useMemo(
     () => fields.reduce((acc, field) => ({ ...acc, [field.name]: '' }), {}),
     [fields]
@@ -64,8 +66,11 @@ function CrudSection({ title, module, fields, records, onRefresh }) {
   return (
     <section className="panel">
       <div className="panel-header">
-        <h2>{title}</h2>
-        <span>{records.length} registros</span>
+        <div>
+          <h2>{title}</h2>
+          {helper && <p>{helper}</p>}
+        </div>
+        <span className="pill">{records.length} registros</span>
       </div>
       <form className="form-grid" onSubmit={submit}>
         {fields.map((field) => (
@@ -117,38 +122,40 @@ function Dashboard({ data }) {
   const totalRevenue = data.reservations.reduce((acc, r) => acc + Number(r.total || 0), 0);
   const occupied = data.rooms.filter((room) => room.status === 'Ocupada').length;
   const pendingTasks = data.tasks.filter((task) => task.status !== 'Completada').length;
+  const floors = data.floors.length;
 
   return (
     <div className="dashboard-grid">
       <article className="kpi">
-        <h3>Ingresos Totales</h3>
+        <h3>Ingresos proyectados</h3>
         <strong>${totalRevenue.toLocaleString('es-MX')}</strong>
-        <small>Basado en reservas activas</small>
+        <small>Reservas activas en El Hotel Rogger</small>
       </article>
       <article className="kpi">
-        <h3>Habitaciones Ocupadas</h3>
+        <h3>Ocupación actual</h3>
         <strong>{occupied}/{data.rooms.length}</strong>
-        <small>Nivel de ocupación actual</small>
+        <small>Habitaciones ocupadas</small>
       </article>
       <article className="kpi">
-        <h3>Tareas Pendientes</h3>
-        <strong>{pendingTasks}</strong>
-        <small>Housekeeping y mantenimiento</small>
+        <h3>Operación diaria</h3>
+        <strong>{pendingTasks} tareas</strong>
+        <small>Pendientes por cerrar hoy</small>
       </article>
       <article className="panel chart-panel">
-        <h3>Disponibilidad por tipo</h3>
-        {['Suite', 'Doble', 'Sencilla'].map((type) => {
-          const total = data.rooms.filter((r) => r.type === type).length;
-          const free = data.rooms.filter((r) => r.type === type && r.status === 'Disponible').length;
-          const ratio = total ? (free / total) * 100 : 0;
-          return (
-            <div key={type} className="meter">
-              <span>{type}</span>
-              <div className="bar"><i style={{ width: `${ratio}%` }} /></div>
-              <span>{free}/{total}</span>
-            </div>
-          );
-        })}
+        <h3>Distribución por piso</h3>
+        <div className="stat-list">
+          {data.floors.map((floor) => {
+            const onFloor = data.rooms.filter((room) => String(room.floor) === String(floor.level));
+            const occupiedFloor = onFloor.filter((room) => room.status === 'Ocupada').length;
+            return (
+              <div key={floor.id} className="stat-item">
+                <span>Piso {floor.level}</span>
+                <strong>{occupiedFloor}/{onFloor.length || 0}</strong>
+              </div>
+            );
+          })}
+          {floors === 0 && <p>No hay pisos configurados.</p>}
+        </div>
       </article>
       <article className="panel chart-panel">
         <h3>Actividad reciente</h3>
@@ -168,11 +175,11 @@ function Dashboard({ data }) {
 export default function App() {
   const [active, setActive] = useState('dashboard');
   const [data, setData] = useState({
-    rooms: [], reservations: [], guests: [], tasks: [], messages: [], inventory: []
+    hotel: [], floors: [], rooms: [], reservations: [], guests: [], tasks: [], messages: [], inventory: []
   });
 
   const loadAll = async () => {
-    const keys = ['rooms', 'reservations', 'guests', 'tasks', 'messages', 'inventory'];
+    const keys = ['hotel', 'floors', 'rooms', 'reservations', 'guests', 'tasks', 'messages', 'inventory'];
     const result = await Promise.all(keys.map((key) => api(key)));
     const next = {};
     keys.forEach((key, i) => {
@@ -189,10 +196,10 @@ export default function App() {
     <div className="layout">
       <aside className="sidebar">
         <div className="brand">
-          <div className="logo">▦</div>
+          <div className="logo">ER</div>
           <div>
-            <h1>Lodgify Pro</h1>
-            <small>Hotel Management</small>
+            <h1>El Hotel Rogger</h1>
+            <small>Gestión centralizada</small>
           </div>
         </div>
         <nav>
@@ -209,16 +216,49 @@ export default function App() {
       </aside>
       <main>
         <header className="topbar">
-          <input placeholder="Buscar por habitación, huésped o tarea..." />
-          <div className="user">Administrador · Vista general</div>
+          <input placeholder="Buscar por piso, habitación, huésped o tarea..." />
+          <div className="user">Administrador · Operación del hotel</div>
         </header>
         {active === 'dashboard' && <Dashboard data={data} />}
+        {active === 'hotel' && (
+          <CrudSection
+            title="Datos del hotel"
+            helper="Sistema preparado para un solo hotel con varios pisos."
+            module="hotel"
+            fields={[
+              { name: 'name', label: 'Nombre comercial' },
+              { name: 'city', label: 'Ciudad' },
+              { name: 'address', label: 'Dirección' },
+              { name: 'phone', label: 'Teléfono' },
+              { name: 'email', label: 'Correo', type: 'email' },
+              { name: 'floors', label: 'Número de pisos', type: 'number' }
+            ]}
+            records={data.hotel}
+            onRefresh={loadAll}
+          />
+        )}
+        {active === 'floors' && (
+          <CrudSection
+            title="Pisos del hotel"
+            helper="Define áreas y capacidad por cada piso."
+            module="floors"
+            fields={[
+              { name: 'level', label: 'Nivel' },
+              { name: 'name', label: 'Nombre del piso' },
+              { name: 'zone', label: 'Zona operativa' },
+              { name: 'status', label: 'Estado' }
+            ]}
+            records={data.floors}
+            onRefresh={loadAll}
+          />
+        )}
         {active === 'rooms' && (
           <CrudSection
-            title="Gestión de Habitaciones"
+            title="Gestión de habitaciones"
             module="rooms"
             fields={[
               { name: 'number', label: 'Número' },
+              { name: 'floor', label: 'Piso' },
               { name: 'type', label: 'Tipo' },
               { name: 'status', label: 'Estado' },
               { name: 'price', label: 'Tarifa', type: 'number' }
@@ -258,7 +298,7 @@ export default function App() {
         )}
         {active === 'tasks' && (
           <CrudSection
-            title="Tareas Operativas"
+            title="Tareas operativas"
             module="tasks"
             fields={[
               { name: 'title', label: 'Título' },
@@ -272,7 +312,7 @@ export default function App() {
         )}
         {active === 'messages' && (
           <CrudSection
-            title="Mensajería Interna"
+            title="Mensajería interna"
             module="messages"
             fields={[
               { name: 'sender', label: 'Remitente' },
