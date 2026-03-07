@@ -1,5 +1,1 @@
-[
-  {"id":"room_1","number":"101","type":"Suite","status":"Ocupada","price":"3200"},
-  {"id":"room_2","number":"102","type":"Doble","status":"Disponible","price":"2200"},
-  {"id":"room_3","number":"103","type":"Sencilla","status":"Disponible","price":"1600"}
-]
+[]
